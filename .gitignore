@@ -1,0 +1,48 @@
+# build/cache
+__pycache__/
+.cache/
+
+# outputs
+output/
+
+# editor
+*.swp
+.DS_Store
+# Environment and secrets
+.env
+*.key
+
+# Output files
+output/
+*.urdf
+*.sdf
+*.xml
+
+# Mesh files
+meshes/
+*.stl
+*.dae
+
+# Cache
+.cache/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Python
+*.egg-info/
+dist/
+build/
+

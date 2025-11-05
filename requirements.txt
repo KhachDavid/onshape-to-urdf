@@ -1,0 +1,14 @@
+# Onshape to URDF Pipeline Requirements
+
+# Core conversion tool
+onshape-to-robot>=0.3.0
+
+# Additional dependencies
+numpy>=1.20.0
+requests>=2.25.0
+pyyaml>=5.4.0
+
+# Optional but recommended
+python-dotenv>=0.19.0  # For managing environment variables
+colorama>=0.4.4        # For colored terminal output
+
