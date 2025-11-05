@@ -46,6 +46,17 @@ ros2 run robot_state_publisher robot_state_publisher \
 rviz2
 ```
 
+## 6) Quick RViz demo script
+From the repo root:
+```bash
+bash rviz_demo.sh                 # uses newest directory under output/
+bash rviz_demo.sh output/<robot>_<timestamp>  # or specify a directory
+```
+The script will:
+- start `joint_state_publisher_gui` (or fallback to `joint_state_publisher`),
+- start `robot_state_publisher` with the chosen URDF,
+- launch RViz2 with the bundled config at `rviz/demo.rviz` (Grid, TF, RobotModel).
+
 ## Notes
 - Customize by editing only `config.json` IDs.
 - Use `robot_standalone.urdf` when loading in tools that expect absolute mesh paths.
