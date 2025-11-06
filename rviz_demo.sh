@@ -97,8 +97,10 @@ if [[ ${#JSP_CMD[@]} -gt 0 ]]; then
 fi
 
 echo "[rviz_demo] Starting robot_state_publisher in background..."
+# Convert relative mesh paths to absolute for robot_state_publisher
+URDF_CONTENT="$(cat "$URDF_PATH" | sed "s|filename=\"assets/|filename=\"file://$OUTPUT_DIR/assets/|g" | sed "s|filename=\"meshes/|filename=\"file://$OUTPUT_DIR/meshes/|g")"
 ros2 run robot_state_publisher robot_state_publisher \
-  --ros-args -p robot_description:="$(cat "$URDF_PATH")" \
+  --ros-args -p robot_description:="$URDF_CONTENT" \
   -p publish_frequency:=30.0 >/dev/null 2>&1 &
 BG_PIDS+=($!)
 
@@ -109,10 +111,10 @@ sleep 1
 RVIZ_CONFIG="$REPO_ROOT/rviz/demo.rviz"
 if [[ -f "$RVIZ_CONFIG" ]]; then
   echo "[rviz_demo] Launching RViz2 with config: $RVIZ_CONFIG"
-  rviz2 -d "$RVIZ_CONFIG" --ros-args -p robot_description:="$(cat "$URDF_PATH")"
+  rviz2 -d "$RVIZ_CONFIG"
 else
   echo "[rviz_demo] Launching RViz2 (no config found)."
-  rviz2 --ros-args -p robot_description:="$(cat "$URDF_PATH")"
+  rviz2
 fi
 
 # When RViz exits, the cleanup trap will automatically run

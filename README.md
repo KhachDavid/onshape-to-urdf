@@ -35,7 +35,7 @@ bash run_conversion.sh
 ```
 Outputs are written to `output/<robot>_<timestamp>/`:
 - `robot.urdf` (original, package:// URIs)
-- `robot_standalone.urdf` (file:// absolute mesh paths)
+- `robot_standalone.urdf` (relative mesh paths like assets/base.stl)
 - `assets/` (meshes)
 
 ## 5) (Optional) Visualize in ROS 2
@@ -59,4 +59,4 @@ The script will:
 
 ## Notes
 - Customize by editing only `config.json` IDs.
-- Use `robot_standalone.urdf` when loading in tools that expect absolute mesh paths.
+- Use `robot_standalone.urdf` for portable URDFs with relative mesh paths (assets/base.stl).

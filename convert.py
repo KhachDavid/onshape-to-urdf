@@ -181,7 +181,7 @@ class OnshapeToURDFConverter:
         return len(issues) == 0
 
     def _emit_standalone_urdf(self, robot_file: Path) -> Path:
-        """Create a standalone URDF with file:// absolute mesh paths.
+        """Create a standalone URDF with relative mesh paths.
 
         Args:
             robot_file: Path to the generated URDF inside the output directory
@@ -192,14 +192,16 @@ class OnshapeToURDFConverter:
         meshes_dir = self.output_dir / 'meshes'
         assets_dir = self.output_dir / 'assets'
 
-        # Build a map from mesh basename to absolute path
-        basename_to_path: Dict[str, Path] = {}
+        # Build a map from mesh basename to relative path
+        basename_to_relpath: Dict[str, str] = {}
         for dir_path in (meshes_dir, assets_dir):
             if not dir_path.exists():
                 continue
             for mesh_path in dir_path.rglob('*'):
                 if mesh_path.suffix.lower() in {'.stl', '.dae', '.obj'} and mesh_path.is_file():
-                    basename_to_path[mesh_path.name] = mesh_path.resolve()
+                    # Store relative path from output_dir
+                    rel_path = mesh_path.relative_to(self.output_dir)
+                    basename_to_relpath[mesh_path.name] = rel_path.as_posix()
 
         # Read and parse the URDF
         with open(robot_file, 'r') as f:
@@ -208,29 +210,41 @@ class OnshapeToURDFConverter:
         # Parse XML
         root = ET.fromstring(urdf_text)
 
-        # Replace mesh URIs with file:// absolute paths using basename matching
+        # Replace mesh URIs with relative paths
         for mesh in root.findall('.//mesh'):
             uri = mesh.get('filename')
             if not uri:
                 continue
-            # Skip if already absolute file URI
-            if uri.startswith('file://'):
+            # Skip if already a relative path without scheme
+            if not uri.startswith('package://') and not uri.startswith('file://'):
                 continue
             # Strategy 1: If it's a package:// URI, try to resolve relative to output dir
             if uri.startswith('package://'):
                 # Example: package://robot_description/assets/base.stl -> assets/base.stl
+                # or:      package://assets/base.stl -> assets/base.stl (no package name)
                 after_scheme = uri.split('://', 1)[1]
                 parts = Path(after_scheme).parts
-                relative_parts = parts[1:] if len(parts) > 1 else parts  # drop package name
-                candidate_path = (self.output_dir.joinpath(*relative_parts)).resolve()
+                
+                # Try with the full path first (no package name to drop)
+                candidate_path = self.output_dir.joinpath(*parts)
                 if candidate_path.exists():
-                    mesh.set('filename', f'file://{candidate_path.as_posix()}')
+                    rel_path = candidate_path.relative_to(self.output_dir)
+                    mesh.set('filename', rel_path.as_posix())
                     continue
+                
+                # If that didn't work, try dropping the first part (assuming it's a package name)
+                if len(parts) > 1:
+                    relative_parts = parts[1:]
+                    candidate_path = self.output_dir.joinpath(*relative_parts)
+                    if candidate_path.exists():
+                        rel_path = candidate_path.relative_to(self.output_dir)
+                        mesh.set('filename', rel_path.as_posix())
+                        continue
             # Strategy 2: Fallback to basename lookup within known mesh dirs
             basename = Path(uri).name
-            abs_path = basename_to_path.get(basename)
-            if abs_path:
-                mesh.set('filename', f'file://{abs_path.as_posix()}')
+            rel_path = basename_to_relpath.get(basename)
+            if rel_path:
+                mesh.set('filename', rel_path)
 
         # Serialize back to XML (URDF)
         standalone_path = self.output_dir / 'robot_standalone.urdf'
